@@ -31,6 +31,10 @@ Options:
 EOF
 }
 
+anat=
+template=
+mask=
+
 #initialise options
 
 while getopts "h:a:t:m" OPTION
