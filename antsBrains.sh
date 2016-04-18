@@ -68,6 +68,32 @@ then
     exit 1
 fi
 
+if [ -f $anat ];
+then
+    echo "structural ok"
+else
+    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
+    exit 1
+fi
+
+if [ -f $template ];
+then
+    echo "template ok"
+    echo ""
+else
+    echo "Cannot locate file $template. Please ensure the file $template is in the working directory"
+    exit 1
+fi
+
+if [ -f $mask ];
+then
+    echo "mask ok"
+    echo ""
+else
+    echo "Cannot locate file $mask. Please ensure the file $mask is in the working directory"
+    exit 1
+fi
+
 echo "files and options ok"
 
 bash antsBrainExtraction.sh \
