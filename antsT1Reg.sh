@@ -22,7 +22,7 @@ bash antsT1Reg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm.nii.gz
 Options:
 
 -h  show this help
--a  anatomical (moving image)
+-a  skull stripped anatomical (moving image)
 -t  skull stripped template (fixed image)
 
 ============================================================================
@@ -32,7 +32,7 @@ EOF
 
 #initialise options
 
-while getopts "ha:t:m" OPTION
+while getopts "ha:t" OPTION
 do
     case $OPTION in
     h)
@@ -55,7 +55,7 @@ done
 
 #check usage
 
-if [[ -z $anat ]] || [[ -z $template ]] || [[ -z $mask ]]
+if [[ -z $anat ]] || [[ -z $template ]]
 then
     usage
     exit 1
@@ -64,19 +64,19 @@ fi
 echo "files and options ok"
 
 #Create registration
-bash antsRegistrationSyN.sh \
+antsRegistrationSyN.sh \
 -d 3 \
 -m $anat \
 -f $template \
 -o AR_
 
 #Apply transforms
-antsApplyTransforms
--d 3
--i $anat
--o AT_
--r $template
--t AR_affine0
+antsApplyTransforms \
+-d 3 \
+-i $anat \
+-o AT_ \
+-r $template \
+-t AR_affine0 \
 -t AR_diff1warp.nii.gz
 
 #Quality control output
