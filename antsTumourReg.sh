@@ -19,14 +19,14 @@ Uses tumour mask and inverse transforms (from MNI to anatomical)
 
 Example:
 
-antsTumourReg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm.nii.gz -m mask.nii.gz
+antsTumourReg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm_brain.nii.gz -m mask.nii.gz
 
 Options:
 
 -h  show this help
 -a  skull stripped anatomical (fixed image)
 -t  skull stripped template (moving image)
--m  mask (in anatomical space)
+-m  tumour mask (anatomical space - tumour is 1)
 
 ============================================================================
 
