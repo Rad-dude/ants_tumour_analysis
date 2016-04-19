@@ -15,9 +15,11 @@ antsT1Reg.sh
 
 Registers a T1 image to standard space (e.g. MNI)
 
+No masks - just straight up
+
 Example:
 
-bash antsT1Reg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm.nii.gz
+antsT1Reg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm.nii.gz
 
 Options:
 
@@ -71,13 +73,18 @@ antsRegistrationSyN.sh \
 -o AR_
 
 #Apply transforms
+
+output=`echo $anat | sed s/.nii.gz/_/g`
+
 antsApplyTransforms \
 -d 3 \
 -i $anat \
--o AT_ \
+-o ${output}MNI.nii.gz \
 -r $template \
--t AR_affine0 \
--t AR_diff1warp.nii.gz
+-t AR_1warp.nii.gz \
+-t AR_0GenericAffine.mat \
+-n NearestNeighbor \
+--float 1
 
 #Quality control output
-slices $template $anat ANTS_T1Reg_check.gif
+slices $template ${output}MNI.nii.gz ANTS_T1Reg_check.gif
