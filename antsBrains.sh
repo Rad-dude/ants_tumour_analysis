@@ -71,6 +71,7 @@ bash antsBrainExtraction.sh \
 -a $anat \
 -e $template \
 -m $mask \
+-o ABE
 
 echo "antsBrains done: brain extracted"
 
