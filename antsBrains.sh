@@ -77,6 +77,5 @@ echo "antsBrains done: brain extracted"
 
 echo "now viewing results"
 
-slices $anat BrainExtractionBrain.nii.gz ABE_check.gif
-eog ABE_check.gif
+slices $anat ABEBrainExtractionBrain.nii.gz ABE_check.gif
 
