@@ -19,7 +19,7 @@ No masks - just straight up
 
 Example:
 
-antsT1Reg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm.nii.gz
+antsT1Reg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm_brain.nii.gz
 
 Options:
 
@@ -66,6 +66,7 @@ fi
 echo "files and options ok"
 
 #Create registration
+
 antsRegistrationSyN.sh \
 -d 3 \
 -m $anat \
@@ -87,4 +88,4 @@ antsApplyTransforms \
 --float 1
 
 #Quality control output
-slices $template ${output}MNI.nii.gz ANTS_T1Reg_check.gif
+slices ${output}MNI.nii.gz $template -s 2 -o ANTS_T1Reg_check.gif
