@@ -34,7 +34,7 @@ EOF
 
 #initialise options
 
-while getopts "ha:t" OPTION
+while getopts "ha:t:" OPTION
 do
     case $OPTION in
     h)
