@@ -81,7 +81,7 @@ antsApplyTransforms \
 -i $anat \
 -o ${output}MNI.nii.gz \
 -r $template \
--t AR_1warp.nii.gz \
+-t AR_1Warp.nii.gz \
 -t AR_0GenericAffine.mat \
 -n NearestNeighbor \
 --float 1
