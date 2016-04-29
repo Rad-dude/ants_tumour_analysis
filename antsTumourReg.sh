@@ -69,6 +69,9 @@ fi
 
 echo "files and options ok"
 
+#need to make mask negative first (exclusion mask)
+fslmaths $mask -binv $inv_mask #tumour is 0 / rest is 1
+
 #Create registration
 #note structural is fixed (with mask) and moving is MNI
 
@@ -76,7 +79,7 @@ antsRegistrationSyN.sh \
 -d 3 \
 -f $anat \
 -m $template \
--x $mask \
+-x $inv_mask \
 -o ATR_
 
 #Apply transforms to mprage (to put in MNI)
@@ -102,18 +105,18 @@ output=`echo $mask | sed s/.nii.gz/_/g`
 
 antsApplyTransforms \
 -d 3 \
--i $anat \
--o ${mask}MNI.nii.gz \
+-i $mask \
+-o ${output}MNI.nii.gz \
 -r $template \
 -t [ATR_0GenericAffine.mat,1] \
 -t ATR_1InverseWarp.nii.gz \
 -n NearestNeighbor \
 --float 1
 
-#do some stuff to tumour mask
-fslmaths $mask -s 1 smooth_image
-fslmaths smooth_image -binv neg_mask
-fslmaths $template -mul neg_mask ${template}_lesioned
+#do some stuff to tumour mask - need to make for MNI mask instead [ ] 
+fslmaths ${output}MNI.nii.gz -s 1 smooth_mask
+fslmaths smooth_mask -binv smooth_neg_mask
+fslmaths $template -mul smooth_neg_mask template_lesioned
 
 #make images
-slices ${template}_lesioned -o ANTS_TumouReg_lesion_check.gif
+slices template_lesioned -o ANTS_TumouReg_lesion_check.gif
