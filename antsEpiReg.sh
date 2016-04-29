@@ -40,7 +40,6 @@ do
         exit 1
         ;;
     f)
-        usage
         epi=$OPTARG
         ;;
     s)
@@ -75,7 +74,6 @@ antsRegistrationSyN.sh
 -o affine \
 -f $structural \
 -m $ref \
--t a
 
 #3. warp the single epi image
 
