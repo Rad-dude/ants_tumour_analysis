@@ -43,7 +43,6 @@ do
         exit 1
         ;;
     a)
-        usage
         anat=$OPTARG
         ;;
     t)
