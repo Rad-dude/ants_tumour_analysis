@@ -60,7 +60,7 @@ done
 
 #check usage
 
-if [[ -z $anat ]] || [[ -z $template ]] || [[-z $mask ]]
+if [[ -z $anat ]] || [[ -z $template ]] || [[ -z $mask ]]
 then
     usage
     exit 1
