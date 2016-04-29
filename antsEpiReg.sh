@@ -32,7 +32,7 @@ EOF
 
 #initialise options
 
-while getopts "hf:t:w:" OPTION
+while getopts "hf:s:" OPTION
 do
     case $OPTION in
     h)
