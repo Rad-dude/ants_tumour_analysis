@@ -69,6 +69,7 @@ fi
 echo "files and options ok"
 
 #need to make mask negative first (exclusion mask)
+inv_mask=inv_mask.nii.gz
 fslmaths $mask -binv $inv_mask #tumour is 0 / rest is 1
 
 #Create registration
