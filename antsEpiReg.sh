@@ -69,7 +69,7 @@ antsMotionCorr -d 3 -a $epi -o $ref #now we have a single reference EPI image
 
 #2. generate a 3D affine transformation to a template
 
-antsRegistrationSyN.sh
+antsRegistrationSyN.sh \
 -d 3 \
 -o affine \
 -f $structural \
