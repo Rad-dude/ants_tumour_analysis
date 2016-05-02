@@ -68,11 +68,11 @@ fi
 
 echo "files and options ok"
 
-#need to make mask negative first (exclusion mask)
+#1. Make mask negative first (exclusion mask)
 inv_mask=inv_mask.nii.gz
 fslmaths $mask -binv $inv_mask #tumour is 0 / rest is 1
 
-#Create registration
+#2. Create registration
 #note structural is fixed (with mask) and moving is MNI
 
 antsRegistrationSyN.sh \
@@ -82,7 +82,7 @@ antsRegistrationSyN.sh \
 -x $inv_mask \
 -o ATR_
 
-#Apply transforms to mprage (to put in MNI)
+#3. Apply transforms to mprage (to put in MNI)
 
 output=`echo $anat | sed s/.nii.gz/_/g`
 
@@ -96,10 +96,10 @@ antsApplyTransforms \
 -n NearestNeighbor \
 --float 1
 
-#Quality control output
+#4. Quality control registration output
 slices ${output}MNI.nii.gz ${template} -o ANTS_TumourReg_check.gif
 
-#Apply transforms to lesion mask (to put in MNI)
+#5. Apply transforms to lesion mask (to put in MNI)
 
 output=`echo $mask | sed s/.nii.gz/_/g`
 
@@ -113,10 +113,26 @@ antsApplyTransforms \
 -n NearestNeighbor \
 --float 1
 
-#do some stuff to tumour mask - need to make for MNI mask instead [ ] 
-fslmaths ${output}MNI.nii.gz -s 1 smooth_mask
-fslmaths smooth_mask -binv smooth_neg_mask
-fslmaths $template -mul smooth_neg_mask template_lesioned
+#6. Do some stuff to tumour mask - need to make for MNI mask instead [ ]
+fslmaths ${output}MNI.nii.gz -binv neg_mask_MNI
+fslmaths neg_mask_MNI -s 2 neg_mask_MNI_s2
+fslmaths $template -mul neg_mask_MNI_s2 template_lesioned
 
-#make images
-slices template_lesioned -o ANTS_TumouReg_lesion_check.gif
+#7. Quality control lesion output
+slices template_lesioned -o ANTS_TumourReg_lesion_check.gif
+
+#8. Concatenate transforms
+
+antsApplyTransforms \
+-d 3
+-o structural2template.nii.gz
+-t [ATR_0GenericAffine.mat, 1]
+-t ATR_1InverseWarp.nii.gz
+-r $template
+
+antsApplyTransforms
+-d 3
+-o template2structural.nii.gz
+-t ATR_1Warp.nii.gz
+-t ATR_0GenericAffine.mat
+-r $anat
