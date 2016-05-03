@@ -18,13 +18,13 @@ Creates an affine transform from epi to MNI via mprage
 
 Example:
 
-bash antsRegister4D.sh -f epi.nii.gz -w warp.nii.gz -r affine.mat -t MNI.nii.gz
+antsRegister4D.sh -f epi.nii.gz -w warp.nii.gz -r affine.mat -t MNI.nii.gz
 
 Options:
 
     -h  show this help
     -f  functional / epi
-    -w  warp (contactenated trasnform) from structural-to-standard
+    -w  warp (contactenated transform) from structural-to-standard
     -r  rigid transform from epi-to-structural
     -t  standard space template e.g. MNI
 
@@ -35,7 +35,7 @@ EOF
 
 #initialise options
 
-while getopts "h:a:f:w:t" OPTION
+while getopts "hf:w:r:t" OPTION
 do
     case $OPTION in
     h)
