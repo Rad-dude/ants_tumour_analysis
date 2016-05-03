@@ -13,8 +13,7 @@ antsRegister4D.sh
 
 (c) Michael Hart, University of Cambridge, 2016
 
-
-Creates an affine transform from epi to MNI via mprage
+Warps a 4D epi to standard space
 
 Example:
 
@@ -35,7 +34,7 @@ EOF
 
 #initialise options
 
-while getopts "hf:w:r:t" OPTION
+while getopts "hf:w:r:t:" OPTION
 do
     case $OPTION in
     h)
