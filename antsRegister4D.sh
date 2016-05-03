@@ -84,7 +84,7 @@ antsApplyTransforms \
 -d 3 \
 -t $warp \
 -t $affine \
--o diff4DCollapsedWarp.nii.gz
+-o [diff4DCollapsedWarp.nii.gz, 1]
 
 #3. multiply transforms
 
