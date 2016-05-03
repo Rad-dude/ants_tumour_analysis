@@ -124,15 +124,15 @@ slices template_lesioned -o ANTS_TumourReg_lesion_check.gif
 #8. Concatenate transforms
 
 antsApplyTransforms \
--d 3
--o structural2template.nii.gz
--t [ATR_0GenericAffine.mat, 1]
--t ATR_1InverseWarp.nii.gz
+-d 3 \
+-o [structural2standard.nii.gz,1] \
+-t [ATR_0GenericAffine.mat, 1] \
+-t ATR_1InverseWarp.nii.gz \
 -r $template
 
 antsApplyTransforms
--d 3
--o template2structural.nii.gz
--t ATR_1Warp.nii.gz
--t ATR_0GenericAffine.mat
+-d 3 \
+-o [standard2structural.nii.gz,1] \
+-t ATR_1Warp.nii.gz \
+-t ATR_0GenericAffine.mat \
 -r $anat
