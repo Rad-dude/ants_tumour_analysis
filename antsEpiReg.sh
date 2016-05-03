@@ -87,4 +87,4 @@ antsApplyTransforms \
 
 #4. quality check the result
 
-slices $structural epi2struct -o antsEpiCheck.gif
+slices $structural epi2struct.nii.gz -o antsEpiCheck.gif
