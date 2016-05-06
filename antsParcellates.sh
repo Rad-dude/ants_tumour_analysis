@@ -26,6 +26,12 @@ Options:
 -r  rigid transform (affine) from epi-to-structural e.g. antsEpiReg.sh output
 -p  parcellation template (MNI space, 3D)
 
+Outputs:
+
+ants_ts.txt:    time series per parcel
+ants_n.txt:     number of voxcels per parcel
+ants_xyz.txt:   epi co-ordinates of parcel centre of gravity (mm)
+
 ============================================================================
 
 EOF
@@ -47,7 +53,7 @@ do
         warp=$OPTARG
         ;;
     r)
-        affine=$optarg
+        affine=$OPTARG
         ;;
     p)
         parcels=$OPTARG
@@ -72,7 +78,7 @@ echo "files and options ok"
 ref=epi_avg.nii.gz
 antsMotionCorr -d 3 -a $epi -o $ref #now we have a single reference EPI image
 
-#2. reverse & apply tranforms
+#2. move parcellation template to functional space
 
 echo "moving template from MNI to EPI space"
 
@@ -80,33 +86,20 @@ antsApplyTransforms -d 3 \
 -o native_template.nii.gz \
 -t $warp \
 -t [$affine, 1] \
--r $ref
+-r $ref \
+-i $parcels \
+-n NearestNeighbor \
+--float
 
-#extract time series
+#3. extract time series
 
 echo "now extracting timeseries for each parcels"
 
-touch ants_ts.txt
-
 fslmeants -i $fmri --label=native_template.nii.gz --transpose -o ants_ts.txt
 
-#calculate co-ordinates and numbers of voxels
+#4. calculate co-ordinates and numbers of voxels
 
-echo "now calculating co-ordinates and numbers of voxels"
+echo "finally checking numbers of voxels and co-ordinates of each parcel"
 
-touch ants_xyz.txt
-touch ants_nv.txt
-
-sys=`uname`
-if [[ "$sys" == 'Darwin' ]]; then
-    for i in $(jot ${np} 1); do
-        fslstats -c -k $i >> ants_xyz.txt
-        fslstats -V -k $i >> ants_nv.txt
-    done
-
-elif [[ "$sys" == 'Linux' || "$sys" == 'FreeBSD' ]]; then
-    for i in $(seq 1 ${np}); do
-        fslstats -c -k $i >> ants_xyz.txt
-        fslstats -V -k $i >> ants_nv.txt
-    done
-fi
+fslstats -K native_template.nii.gz $epi -V >> ants_n.txt #voxels & volume in epi space
+fslstats -K native_template.nii.gz $epi -c >> ants_xyz.txt #mm co-ordinates in epi space
