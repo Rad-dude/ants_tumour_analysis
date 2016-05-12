@@ -93,7 +93,7 @@ echo "options ok"
 
 basedir=`pwd`
 
-if [ -f ${basedir}/ABE ];
+if [ ! -d ${basedir}/ABE ];
 then
     echo "making output director"
     makedir ${basedir}/ABE
@@ -127,7 +127,7 @@ if [ -f $anat ];
 then
     echo "Structural dataset ok"
 else
-    echo "Cannot locate file $input. Please ensure the $input dataset is in this directory"
+    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
     exit 1
 fi
 

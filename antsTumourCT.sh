@@ -102,7 +102,7 @@ echo "options ok"
 
 basedir=`pwd`
 
-if [ -f ${basedir}/ACT ];
+if [ ! -d ${basedir}/ACT ];
 then
     echo "making output director"
     makedir ${basedir}/ACT
@@ -136,7 +136,7 @@ if [ -f $anat ];
 then
     echo "Structural dataset ok"
 else
-    echo "Cannot locate file $input. Please ensure the $input dataset is in this directory"
+    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
     exit 1
 fi
 
@@ -144,7 +144,7 @@ if [ -f $mask ];
 then
     echo "Tumour mask ok"
 else
-    echo "Cannot locate file $input. Please ensure the $input dataset is in this directory"
+    echo "Cannot locate file $mask. Please ensure the $mask dataset is in this directory"
     exit 1
 fi
 
