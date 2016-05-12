@@ -105,12 +105,12 @@ basedir=`pwd`
 if [ ! -d ${basedir}/ACT ];
 then
     echo "making output director"
-    makedir ${basedir}/ACT
+    mkdir ${basedir}/ACT
 else
     echo "output directory already exists"
     if [ "$overwrite" == 1 ]
     then
-        makedir -p ${basedir}/ACT
+        mk -p ${basedir}/ACT
     else
         echo "no overwrite permission to make new output directory"
         exit 1
@@ -124,7 +124,7 @@ outdir=${basedir}/ACT
 touch ${outdir}/antsTumourCT_logfile.txt
 log=${outdir}/antsTumourCT_logfile.txt
 
-echo date >> ${log}
+echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
 # final check of files
@@ -164,14 +164,14 @@ for nPrior in `ls Priors/`; do
 done
 
 #make new prior5 from tumour mask (in place of brainstem)
-mv $mask Priors/prior5.nii.gz
+cp $mask Priors/prior5.nii.gz
 
 #run antsCorticalThickness.sh
 
 echo "now running antsCorticalThickness.sh"
 
 antsCorticalThickness.sh \
--dim 3 \
+-d 3 \
 -a $anat \
 -e ${template}/MNI152_T1_2mm.nii.gz \
 -m ${template}/MNI152_T1_2mm_brain_mask.nii.gz \
@@ -186,6 +186,6 @@ rm -r Priors/
 #complete log
 
 echo "all done with antsTumourCT.sh" >> ${log}
-echo date >> ${log}
+echo $(date) >> ${log}
 
 

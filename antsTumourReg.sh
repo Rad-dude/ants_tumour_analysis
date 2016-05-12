@@ -27,15 +27,23 @@ Options:
 -a  skull stripped anatomical (fixed image)
 -t  skull stripped template (moving image)
 -m  tumour mask (anatomical space - tumour is 1)
+-o  overwrite
+-v  verbose
 
 ============================================================================
 
 EOF
 }
 
+
+###################
+# Standard checks #
+###################
+
+
 #initialise options
 
-while getopts "ha:t:m:" OPTION
+while getopts "ha:t:m:ov" OPTION
 do
     case $OPTION in
     h)
@@ -51,6 +59,12 @@ do
     m)
         mask=$OPTARG
         ;;
+    o)
+        overwrite=1
+        ;;
+    v)
+        verbose=1
+        ;;
     ?)
         usage
         exit
@@ -58,15 +72,93 @@ do
     esac
 done
 
+#set verbose option
+
+if [ "$verbose" == 1 ]
+then
+    set -x verbose
+fi
+
 #check usage
 
 if [[ -z $anat ]] || [[ -z $template ]] || [[ -z $mask ]]
 then
+    echo "usage incorrect"
     usage
     exit 1
 fi
 
-echo "files and options ok"
+echo "options ok"
+
+
+#define directories
+#need check if exists and if can overwrite
+
+basedir=`pwd`
+
+if [ ! -d ${basedir}/ATR ];
+then
+    echo "making output director"
+    mkdir ${basedir}/ATR
+else
+    echo "output directory already exists"
+    if [ "$overwrite" == 1 ]
+    then
+        mkdir -p ${basedir}/ATR
+    else
+        echo "no overwrite permission to make new output directory"
+    exit 1
+    fi
+fi
+
+outdir=${basedir}/ATR/
+
+cd $outdir
+
+#start logfile
+
+touch ${outdir}antsTumourRegistration_logfile.txt
+log=${outdir}antsTumourRegistration_logfile.txt
+
+echo $(date) >> ${log}
+echo "${@}" >> ${log}
+
+# final check of files
+# do they exist, can they be read, by me, and are the correct format
+
+echo "Checking functional and template data"
+
+if [ -f $anat ];
+then
+    echo "$anat ok"
+else
+    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
+    exit 1
+fi
+
+if [ -f $template ];
+then
+    echo "$template ok"
+else
+    echo "Cannot locate file $template. Please ensure the $anat dataset is in   this directory"
+    exit 1
+fi
+
+if [ -f $mask ];
+then
+    echo "$mask ok"
+else
+    echo "Cannot locate file $mask. Please ensure the $anat dataset is in this directory"
+    exit 1
+fi
+
+echo "files ok"
+
+
+##################
+# Main programme #
+##################
+
 
 #1. Make mask negative first (exclusion mask)
 inv_mask=inv_mask.nii.gz
@@ -113,7 +205,7 @@ antsApplyTransforms \
 -n NearestNeighbor \
 --float 1
 
-#6. Do some stuff to tumour mask - need to make for MNI mask instead [ ]
+#6. Do some stuff to tumour mask 
 fslmaths ${output}MNI.nii.gz -binv neg_mask_MNI
 fslmaths neg_mask_MNI -s 2 neg_mask_MNI_s2
 fslmaths $template -mul neg_mask_MNI_s2 template_lesioned
@@ -130,9 +222,18 @@ antsApplyTransforms \
 -t ATR_1InverseWarp.nii.gz \
 -r $template
 
-antsApplyTransforms
+antsApplyTransforms \
 -d 3 \
 -o [standard2structural.nii.gz,1] \
 -t ATR_1Warp.nii.gz \
 -t ATR_0GenericAffine.mat \
 -r $anat
+
+#perform cleanup
+
+rm neg_mask_MNI net_mask_MNI_s2
+
+#complete log
+
+echo "all done with antsTumourReg.sh" >> ${log}
+echo $(date) >> ${log}

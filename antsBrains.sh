@@ -96,26 +96,26 @@ basedir=`pwd`
 if [ ! -d ${basedir}/ABE ];
 then
     echo "making output director"
-    makedir ${basedir}/ABE
+    mkdir ${basedir}/ABE
 else
     echo "output directory already exists"
     if [ "$overwrite" == 1 ]
     then
-        makedir -p ${basedir}/ABE
+        mkdir -p ${basedir}/ABE
     else
         echo "no overwrite permission to make new output directory"
     exit 1
     fi
 fi
 
-outdir=${basedir}/antsBrains
+outdir=${basedir}/ABE/
 
 #start logfile
 
-touch ${outdir}/antsBrainExtraction_logfile.txt
-log=${outdir}/antsBrainExtraction_logfile.txt
+touch ${outdir}antsBrainExtraction_logfile.txt
+log=${outdir}antsBrainExtraction_logfile.txt
 
-echo date >> ${log}
+echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
 # final check of files
@@ -133,9 +133,11 @@ fi
 
 echo "structural image ok"
 
+
 ##################
 # Main programme #
 ##################
+
 
 bash antsBrainExtraction.sh \
 -d 3 \
@@ -148,11 +150,11 @@ echo "antsBrains done: brain extracted"
 
 echo "now viewing results"
 
-slices $anat ABEBrainExtractionBrain.nii.gz ${outdir}/ABE_check.gif
+slices $anat ${outdir}BrainExtractionBrain.nii.gz -o ${outdir}/ABE_check.gif
 
 #perform cleanup
 
 #complete log
 
 echo "all done with antsBrains.sh" >> ${log}
-echo date >> ${log}
+echo $(date) >> ${log}
