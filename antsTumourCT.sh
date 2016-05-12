@@ -33,6 +33,8 @@ Options:
 -a  anatomical image
 -m  standard space tumour mask (tumour is 1)
 -s  path to standard space template
+-o  overwrite output
+-v  verbose
 
 NB: standard space template requires images of full head, brain, brain mask, and priors
 (see github for MNI example)
@@ -42,9 +44,14 @@ NB: standard space template requires images of full head, brain, brain mask, and
 EOF
 }
 
+###################
+# Standard checks #
+###################
+
+
 #initialise options
 
-while getopts "ha:m:s:" OPTION
+while getopts "ha:m:s:ov" OPTION
 do
     case $OPTION in
     h)
@@ -60,6 +67,12 @@ do
     s)
         template=$OPTARG
         ;;
+    o)
+        overwrite=1
+        ;;
+    v)
+        verbose=1
+        ;;
     ?)
         usage
         exit
@@ -67,20 +80,84 @@ do
     esac
 done
 
+#set verbose option
+
+if [ "$verbose" == 1 ]
+    then
+    set -x verbose
+fi
+
 #check usage
 
-if [[ -z $anat ]] || [[-z $mask ]]
-then
-    usage
+if [[ -z $anat ]] || [[-z $mask ]] || [[-z $template ]]
+    then
+        echo "usage incorrect"
+        usage
     exit 1
 fi
 
-echo "files and options ok"
+echo "options ok"
+
+#define directories
+
+basedir=`pwd`
+
+if [ -f ${basedir}/ACT ];
+then
+    echo "making output director"
+    makedir ${basedir}/ACT
+else
+    echo "output directory already exists"
+    if [ "$overwrite" == 1 ]
+    then
+        makedir -p ${basedir}/ACT
+    else
+        echo "no overwrite permission to make new output directory"
+        exit 1
+    fi
+fi
+
+outdir=${basedir}/ACT
+
+#start logfile
+
+touch ${outdir}/antsTumourCT_logfile.txt
+log=${outdir}/antsTumourCT_logfile.txt
+
+echo date >> ${log}
+echo "${@}" >> ${log}
+
+# final check of files
+# do they exist, can they be read, by me, and are the correct format
+
+echo "Checking functional and template data"
+
+if [ -f $anat ];
+then
+    echo "Structural dataset ok"
+else
+    echo "Cannot locate file $input. Please ensure the $input dataset is in this directory"
+    exit 1
+fi
+
+if [ -f $mask ];
+then
+    echo "Tumour mask ok"
+else
+    echo "Cannot locate file $input. Please ensure the $input dataset is in this directory"
+    exit 1
+fi
+
+
+##################
+# Main programme #
+##################
+
 
 #subtract out priors
 fslmaths $mask -s 1 $mask #smooth
 
-cp -R $template/Priors .
+cp -R ${template}/Priors .
 
 for nPrior in `ls Priors/`; do
     fslmaths $nPrior -sub $mask $nPrior
@@ -91,6 +168,8 @@ mv $mask Priors/prior5.nii.gz
 
 #run antsCorticalThickness.sh
 
+echo "now running antsCorticalThickness.sh"
+
 antsCorticalThickness.sh \
 -dim 3 \
 -a $anat \
@@ -98,4 +177,15 @@ antsCorticalThickness.sh \
 -m ${template}/MNI152_T1_2mm_brain_mask.nii.gz \
 -p ${template}/Priors/prior%d.nii.gz \
 -t ${template}/MNI152_T1_2mm_brain.nii.gz \
--o ATCT_
+-o $outdir
+
+#perform cleanup
+
+rm -r Priors/
+
+#complete log
+
+echo "all done with antsTumourCT.sh" >> ${log}
+echo date >> ${log}
+
+
