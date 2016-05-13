@@ -98,7 +98,7 @@ basedir=`pwd`
 
 if [ ! -d ${basedir}/ATR ];
 then
-    echo "making output director"
+    echo "making output directory"
     mkdir ${basedir}/ATR
 else
     echo "output directory already exists"
@@ -112,8 +112,6 @@ else
 fi
 
 outdir=${basedir}/ATR/
-
-cd $outdir
 
 #start logfile
 
