@@ -170,7 +170,7 @@ antsRegistrationSyN.sh \
 -f $anat \
 -m $template \
 -x $inv_mask \
--o ATR_
+-o $outdir
 
 #3. Apply transforms to mprage (to put in MNI)
 
@@ -179,15 +179,15 @@ output=`echo $anat | sed s/.nii.gz/_/g`
 antsApplyTransforms \
 -d 3 \
 -i $anat \
--o ${output}MNI.nii.gz \
+-o ${outdir}${output}MNI.nii.gz \
 -r $template \
--t [ATR_0GenericAffine.mat,1] \
--t ATR_1InverseWarp.nii.gz \
+-t ${outdir}[ATR_0GenericAffine.mat,1] \
+-t ${outdir}ATR_1InverseWarp.nii.gz \
 -n NearestNeighbor \
 --float 1
 
 #4. Quality control registration output
-slices ${output}MNI.nii.gz ${template} -o ANTS_TumourReg_check.gif
+slices ${output}MNI.nii.gz ${template} -o ${outdir}ANTS_TumourReg_check.gif
 
 #5. Apply transforms to lesion mask (to put in MNI)
 
@@ -196,17 +196,17 @@ output=`echo $mask | sed s/.nii.gz/_/g`
 antsApplyTransforms \
 -d 3 \
 -i $mask \
--o ${output}MNI.nii.gz \
+-o ${outdir}${output}MNI.nii.gz \
 -r $template \
--t [ATR_0GenericAffine.mat,1] \
--t ATR_1InverseWarp.nii.gz \
+-t ${outdir}[ATR_0GenericAffine.mat,1] \
+-t ${outdir}ATR_1InverseWarp.nii.gz \
 -n NearestNeighbor \
 --float 1
 
 #6. Do some stuff to tumour mask 
-fslmaths ${output}MNI.nii.gz -binv neg_mask_MNI
-fslmaths neg_mask_MNI -s 2 neg_mask_MNI_s2
-fslmaths $template -mul neg_mask_MNI_s2 template_lesioned
+fslmaths ${outdir}${output}MNI.nii.gz -binv ${outdir}neg_mask_MNI
+fslmaths ${outdir}neg_mask_MNI -s 2 ${outdir}neg_mask_MNI_s2
+fslmaths $template -mul ${outdir}neg_mask_MNI_s2 ${outdir}template_lesioned
 
 #7. Quality control lesion output
 slices template_lesioned -o ANTS_TumourReg_lesion_check.gif
@@ -215,21 +215,21 @@ slices template_lesioned -o ANTS_TumourReg_lesion_check.gif
 
 antsApplyTransforms \
 -d 3 \
--o [structural2standard.nii.gz,1] \
--t [ATR_0GenericAffine.mat, 1] \
--t ATR_1InverseWarp.nii.gz \
+-o ${outdir}[structural2standard.nii.gz,1] \
+-t ${outdir}[ATR_0GenericAffine.mat, 1] \
+-t ${outdir}ATR_1InverseWarp.nii.gz \
 -r $template
 
 antsApplyTransforms \
 -d 3 \
--o [standard2structural.nii.gz,1] \
--t ATR_1Warp.nii.gz \
--t ATR_0GenericAffine.mat \
+-o ${outdir}[standard2structural.nii.gz,1] \
+-t ${outdir}ATR_1Warp.nii.gz \
+-t ${outdir}ATR_0GenericAffine.mat \
 -r $anat
 
 #perform cleanup
 
-rm neg_mask_MNI net_mask_MNI_s2
+rm ${outdir}neg_mask_MNI.nii.gz ${outdir}neg_mask_MNI_s2.nii.gz
 
 #complete log
 
