@@ -117,7 +117,7 @@ else
     fi
 fi
 
-outdir=${basedir}/ACT
+outdir=${basedir}/ACT/
 
 #start logfile
 
@@ -159,8 +159,8 @@ fslmaths $mask -s 1 $mask #smooth
 
 cp -R ${template}/Priors .
 
-for nPrior in `ls Priors/`; do
-    fslmaths $nPrior -sub $mask $nPrior
+for i in {1..6}; do
+fslmaths Priors/prior{i}.nii.gz -sub $mask Priors/prior{i}.nii.gz
 done
 
 #make new prior5 from tumour mask (in place of brainstem)
@@ -175,7 +175,7 @@ antsCorticalThickness.sh \
 -a $anat \
 -e ${template}/MNI152_T1_2mm.nii.gz \
 -m ${template}/MNI152_T1_2mm_brain_mask.nii.gz \
--p ${template}/Priors/prior%d.nii.gz \
+-p Priors/prior%d.nii.gz \
 -t ${template}/MNI152_T1_2mm_brain.nii.gz \
 -o $outdir
 
