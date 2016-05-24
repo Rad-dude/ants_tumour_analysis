@@ -155,12 +155,12 @@ fi
 
 
 #subtract out priors
-fslmaths $mask -s 1 $mask #smooth
+fslmaths $mask -kernel sphere 2 -fmean $mask #smooth
 
 cp -R ${template}/Priors .
 
 for i in {1..6}; do
-fslmaths Priors/prior{i}.nii.gz -sub $mask Priors/prior{i}.nii.gz
+    fslmaths Priors/prior{i}.nii.gz -sub $mask Priors/prior{i}.nii.gz
 done
 
 #make new prior5 from tumour mask (in place of brainstem)
