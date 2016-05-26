@@ -89,7 +89,7 @@ fi
 
 #check usage
 
-if [[ -z $anat ]] || [[-z $mask ]] || [[-z $template ]]
+if [[ -z $anat ]] || [[-z $mask ]] 
     then
         echo "usage incorrect"
         usage
