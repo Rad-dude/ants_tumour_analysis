@@ -90,7 +90,7 @@ echo "files and options ok"
 if [ ! -d ${basedir}/AER ];
 then
     echo "making output directory"
-    makedir ${basedir}/AER
+    mkdir ${basedir}/AER
 else
     echo "output directory already exists"
     if [ "$overwrite" == 1 ]
