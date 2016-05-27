@@ -123,8 +123,6 @@ fi
 
 echo "files ok"
 
-template=${basedir}/${template}
-
 if [ $(imtest $template) == 1 ];
 then
     echo "$template dataset ok"
@@ -164,7 +162,7 @@ cd $tempdir
 touch AER_logfile.txt
 log=AER_logfile.txt
 
-echo date >> ${log}
+echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
 
@@ -232,8 +230,17 @@ A4DR
 echo "now making some summary pictures"
 
 slices_summary epi2template.nii.gz 4 $template pictures.sum
+cd pictures.sum
+nImages=$(ls -l | wc -l)
+nPictures=$(for ((i=0; i<${nImages}; i++)); do printf "${i} "; done)
+cd ..
+slices_summary pictures.sum single_picture.png $nPictures
 
 #cleanup
 cd $outdir
 mv ${tempdir}/* .
 rm -R ${tempdir} MNI_replicated.nii.gz diff4DCollapsedWarp.nii.gz
+
+#close up
+echo "all done" >> ${log}
+echo $(date) >> ${log}

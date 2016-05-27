@@ -143,7 +143,7 @@ cd $tempdir
 touch AER_logfile.txt
 log=AER_logfile.txt
 
-echo date >> ${log}
+echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
 
@@ -192,3 +192,8 @@ slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
 cd $outdir
 mv ${tempdir}/* .
 rm -R ${tempdir} epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
+
+#close up
+echo "all done" >> ${log}
+echo $(date) >> ${log}
+
