@@ -1,6 +1,14 @@
 #!/bin/bash
+set -e
 
 #Michael Hart, University of Cambridge, 13 April 2016 (c)
+
+#define directories
+
+codedir=${HOME}/bin
+basedir=$(pwd)
+
+#make usage function
 
 usage()
 {
@@ -17,16 +25,20 @@ Does brain extraction with ANTs
 
 Example:
 
-antsBrains.sh -a mprage.nii.gz -t MNI152_T1_2mm.nii.gz -m MNI152_T1_2mm_brain_mask.nii.gz
+antsBrains.sh -s mprage.nii.gz
 
 Options:
 
 -h  show this help
--a  anatomical
--t  template (with skull)
--m  template brain mask
+-s  anatomical
+-t  template head (not skull stripped)
+-m  brain mask of template
 -o  overwrite output directory
 -v  verbose
+
+Version:    1.1
+
+History:    no amendments
 
 ============================================================================
 
@@ -38,18 +50,21 @@ EOF
 # Standard checks #
 ###################
 
+structural=
+template=
+mask=
 
 #initialise options
 
-while getopts "ha:t:m:ov" OPTION
+while getopts "hs:tmov" OPTION
 do
     case $OPTION in
     h)
         usage
         exit 1
         ;;
-    a)
-        anat=$OPTARG
+    s)
+        structural=$OPTARG
         ;;
     t)
         template=$OPTARG
@@ -73,23 +88,66 @@ done
 #set verbose option
 
 if [ "$verbose" == 1 ]
-    then
+then
     set -x verbose
 fi
 
 #check usage
 
-if [[ -z $anat ]] || [[ -z $template ]] || [[ -z $mask ]]
+if [[ -z $structural ]]
 then
-    echo "usage incorrect"
+    echo "usage incorrect" >&2
     usage
     exit 1
 fi
 
 echo "options ok"
 
-#define directories
-#need check if exists and if can overwrite
+# Set defaults if options empty
+
+if [ "$template" == "" ]
+then
+    template="~/ANTS/ANTS_templates/MNI/MNI152_T1_2mm.nii.gz"
+fi
+
+if [ "$mask" == "" ]
+then
+    mask="~/ANTS/ANTS_templates/MNI152_T1_2mm_brain_mask.nii.gz"
+fi
+
+# final check of files
+
+echo "Checking functional and template data"
+
+structural=${basedir}/${structural}
+
+if [ $(imtest $structural) == 1 ];
+then
+    echo "Structural dataset ok"
+else
+    echo "Cannot locate file $structural. Please ensure the $structural dataset is in this directory"
+    exit 1
+fi
+
+if [ $(imtest $template) == 1 ];
+then
+    echo "Template dataset ok"
+else
+    echo "Cannot locate file $template. Please ensure the $template dataset is in this directory"
+    exit 1
+fi
+
+if [ $(imtest $mask) == 1 ];
+then
+    echo "Mask dataset ok"
+else
+    echo "Cannot locate file $mask. Please ensure the $mask dataset is in this directory"
+    exit 1
+fi
+
+echo "files ok"
+
+#make output directory
 
 basedir=`pwd`
 
@@ -110,28 +168,21 @@ fi
 
 outdir=${basedir}/ABE/
 
+#make temporary directory
+
+tempdir="$(mktemp -t -d temp.XXXXXXXX)"
+
+cd $tempdir
+
+mkdir ABE #duplicate
+
 #start logfile
 
-touch ${outdir}antsBrainExtraction_logfile.txt
-log=${outdir}antsBrainExtraction_logfile.txt
+touch ABE_logfile.txt
+log=ABE_logfile.txt
 
 echo $(date) >> ${log}
 echo "${@}" >> ${log}
-
-# final check of files
-# do they exist, can they be read, by me, and are the correct format
-
-echo "Checking functional and template data"
-
-if [ -f $anat ];
-then
-    echo "Structural dataset ok"
-else
-    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
-    exit 1
-fi
-
-echo "structural image ok"
 
 
 ##################
@@ -139,20 +190,35 @@ echo "structural image ok"
 ##################
 
 
-bash antsBrainExtraction.sh \
--d 3 \
--a $anat \
--e $template \
--m $mask \
--o $outdir
+function ABE() {
+
+    antsBrainExtraction.sh \
+    -d 3 \
+    -a $structural \
+    -e $template \
+    -m $mask \
+    -o ABE/
+
+}
+
+#call function
+
+ABE
 
 echo "antsBrains done: brain extracted"
 
+#check results
+
 echo "now viewing results"
 
-slices $anat ${outdir}BrainExtractionBrain.nii.gz -o ${outdir}/ABE_check.gif
+slices $anat ABE/BrainExtractionBrain.nii.gz -o ABE_check.gif
 
 #perform cleanup
+
+cd ABE/
+cp -fpR . "${outdir}"
+cd $outdir
+rm -Rf ${tempdir} BrainExtractionMask.nii.gz BrainExtractionPrior0GenericAffine.mat
 
 #complete log
 

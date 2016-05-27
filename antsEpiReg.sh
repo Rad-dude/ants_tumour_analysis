@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 #Michael Hart, University of Cambridge, 13 April 2016 (c)
 
@@ -43,6 +44,11 @@ History:    no amendments
 EOF
 }
 
+###################
+# Standard checks #
+###################
+
+
 #initialise options
 
 functional=
@@ -74,19 +80,26 @@ do
     esac
 done
 
+#set verbose option
+
+if [ "$verbose" == 1 ]
+then
+    set -x verbose
+fi
+
 #check usage
 
 if [[ -z $functional ]] || [[ -z $structural ]]
 
 then
+    echo "usage incorrect" >&2
     usage
     exit 1
 fi
 
-echo "files and options ok"
+echo "options ok"
 
 # final check of files
-# do they exist, can they be read, by me, and are the correct format
 
 echo "Checking functional and structural data"
 
@@ -104,9 +117,9 @@ structural=${basedir}/${structural}
 
 if [ $(imtest $structural) == 1 ];
 then
-    echo "$functional dataset ok"
+    echo "$structural dataset ok"
 else
-    echo "Cannot locate file $functional. Please ensure the $functional dataset is in this directory"
+    echo "Cannot locate file $structural. Please ensure the $structural dataset is in this directory"
     exit 1
 fi
 
@@ -177,11 +190,15 @@ function AER() {
     -t affine0GenericAffine.mat \
     -r $structural
 
+    Return 0
+
 }
 
 #call function
 
 AER
+
+echo "antsEpiReg done: functional registered to structural"
 
 #check results
 
@@ -189,11 +206,12 @@ slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
 
 #perform cleanup
 
+cp -fpR . "${outdir}"
 cd $outdir
-mv ${tempdir}/* .
-rm -R ${tempdir} epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
+rm -Rf ${tempdir} epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
 
-#close up
-echo "all done" >> ${log}
+#complete log
+
+echo "all done with antsEpiReg.sh" >> ${log}
 echo $(date) >> ${log}
 
