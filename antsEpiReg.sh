@@ -36,7 +36,7 @@ Options:
 
 Version:    1.1
 
-History:    modified 25 May 2016 - new directory handling and slicer file
+History:    no amendments
 
 ============================================================================
 
@@ -92,7 +92,7 @@ echo "Checking functional and structural data"
 
 functional=${basedir}/${functional}
 
-if [ -f $functional ];
+if [ $(imtest $functional) == 1 ];
 then
     echo "$functional dataset ok"
 else
@@ -102,7 +102,7 @@ fi
 
 structural=${basedir}/${structural}
 
-if [ -f $structural ];
+if [ $(imtest $structural) == 1 ];
 then
     echo "$functional dataset ok"
 else
@@ -132,7 +132,11 @@ fi
 
 outdir=${basedir}/AER
 
-cd $outdir
+#make temporary directory
+
+tempdir="$(mktemp -t -d temp.XXXXXXXX)"
+
+cd $tempdir
 
 #start logfile
 
@@ -173,16 +177,18 @@ function AER() {
     -t affine0GenericAffine.mat \
     -r $structural
 
-    #4. quality check the result
-
-    slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
-
 }
 
 #call function
 
 AER
 
+#check results
+
+slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
+
 #perform cleanup
 
-rm epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
+cd $outdir
+mv ${tempdir}/* .
+rm -R ${tempdir} epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
