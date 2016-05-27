@@ -85,36 +85,6 @@ fi
 
 echo "files and options ok"
 
-#make output directory
-
-if [ ! -d ${basedir}/AER ];
-then
-    echo "making output directory"
-    mkdir ${basedir}/AER
-else
-    echo "output directory already exists"
-    if [ "$overwrite" == 1 ]
-        then
-        echo "overwriting output directory"
-        mkdir -p ${basedir}/AER
-    else
-        echo "no overwrite permission to make new output directory"
-        exit 1
-    fi
-fi
-
-outdir=${basedir}/AER
-
-cd $outdir
-
-#start logfile
-
-touch AER_logfile.txt
-log=AER_logfile.txt
-
-echo date >> ${log}
-echo "${@}" >> ${log}
-
 # final check of files
 # do they exist, can they be read, by me, and are the correct format
 
@@ -142,6 +112,36 @@ fi
 
 echo "files ok"
 
+#make output directory
+
+if [ ! -d ${basedir}/AER ];
+then
+    echo "making output directory"
+    mkdir ${basedir}/AER
+else
+    echo "output directory already exists"
+    if [ "$overwrite" == 1 ]
+    then
+        echo "overwriting output directory"
+        mkdir -p ${basedir}/AER
+    else
+        echo "no overwrite permission to make new output directory"
+        exit 1
+    fi
+fi
+
+outdir=${basedir}/AER
+
+cd $outdir
+
+#start logfile
+
+touch AER_logfile.txt
+log=AER_logfile.txt
+
+echo date >> ${log}
+echo "${@}" >> ${log}
+
 
 ##################
 # Main programme #
@@ -153,7 +153,7 @@ function AER() {
     #1. create a single EPI 3D volume
 
     ref=epi_avg.nii.gz
-    antsMotionCorr -d 3 -a $epi -o $ref #now we have a single reference EPI image
+    antsMotionCorr -d 3 -a $functional -o $ref #now we have a single reference EPI image
 
     #2. generate a 3D affine transformation to a template
 
