@@ -157,6 +157,7 @@ touch AER_logfile.txt
 log=AER_logfile.txt
 
 echo $(date) >> ${log}
+echo "${0}" >> ${log}
 echo "${@}" >> ${log}
 
 

@@ -22,6 +22,7 @@ antsBrains.sh
 (c) Michael Hart, University of Cambridge, 2016
 
 Does brain extraction with ANTs
+As default uses MNI head & brain mask
 
 Example:
 
@@ -107,12 +108,12 @@ echo "options ok"
 
 if [ "$template" == "" ]
 then
-    template="~/ANTS/ANTS_templates/MNI/MNI152_T1_2mm.nii.gz"
+    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm.nii.gz"
 fi
 
 if [ "$mask" == "" ]
 then
-    mask="~/ANTS/ANTS_templates/MNI152_T1_2mm_brain_mask.nii.gz"
+    mask="${HOME}/ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain_mask.nii.gz"
 fi
 
 # final check of files
@@ -166,7 +167,7 @@ else
     fi
 fi
 
-outdir=${basedir}/ABE/
+outdir=${basedir}/ABE
 
 #make temporary directory
 
@@ -178,10 +179,11 @@ mkdir ABE #duplicate
 
 #start logfile
 
-touch ABE_logfile.txt
-log=ABE_logfile.txt
+touch ABE/ABE_logfile.txt
+log=ABE/ABE_logfile.txt
 
 echo $(date) >> ${log}
+echo "${0}" >> ${log}
 echo "${@}" >> ${log}
 
 
@@ -190,7 +192,7 @@ echo "${@}" >> ${log}
 ##################
 
 
-function ABE() {
+function antsBE() {
 
     antsBrainExtraction.sh \
     -d 3 \
@@ -203,7 +205,7 @@ function ABE() {
 
 #call function
 
-ABE
+antsBE
 
 echo "antsBrains done: brain extracted"
 
@@ -221,6 +223,6 @@ cd $outdir
 rm -Rf ${tempdir} BrainExtractionMask.nii.gz BrainExtractionPrior0GenericAffine.mat
 
 #complete log
-
+cd ..
 echo "all done with antsBrains.sh" >> ${log}
 echo $(date) >> ${log}
