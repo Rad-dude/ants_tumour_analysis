@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-#Michael Hart, University of Cambridge, 13 April 2016 (c)
+# antsBrains.sh
+#
+#
+# Michael Hart, University of Cambridge, 13 April 2016 (c)
 
 #define directories
 
@@ -173,7 +176,7 @@ outdir=${basedir}/ABE
 
 tempdir="$(mktemp -t -d temp.XXXXXXXX)"
 
-cd $tempdir
+cd "${tempdir}"
 
 mkdir ABE #duplicate
 

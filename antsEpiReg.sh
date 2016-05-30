@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-#Michael Hart, University of Cambridge, 13 April 2016 (c)
+# antsEpiReg.sh
+#
+#
+# Michael Hart, University of Cambridge, 13 April 2016 (c)
 
 #define directories
 
@@ -149,7 +152,7 @@ outdir=${basedir}/AER
 
 tempdir="$(mktemp -t -d temp.XXXXXXXX)"
 
-cd $tempdir
+cd "${tempdir}"
 
 #start logfile
 
@@ -166,7 +169,7 @@ echo "${@}" >> ${log}
 ##################
 
 
-function AER() {
+function antsER() {
 
     #1. create a single EPI 3D volume
 
@@ -191,17 +194,17 @@ function AER() {
     -t affine0GenericAffine.mat \
     -r $structural
 
-    Return 0
-
 }
 
 #call function
 
-AER
+antsER
 
 echo "antsEpiReg done: functional registered to structural"
 
 #check results
+
+echo "now viewing results"
 
 slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
 
@@ -209,7 +212,7 @@ slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
 
 cp -fpR . "${outdir}"
 cd $outdir
-rm -Rf ${tempdir} epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
+rm -Rf "${tempdir}" epi_avg.nii.gz affineWarped.nii.gz affineInverseWarped.nii.gz
 
 #complete log
 
