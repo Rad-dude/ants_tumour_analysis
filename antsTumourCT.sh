@@ -105,7 +105,7 @@ fi
 
 #check usage
 
-if [[ -z "${structural}" ]] || [[-z "${tumour_mask}" ]]
+if [[ -z "${structural}" ]] || [[ -z "${tumour_mask}" ]]
 then
     echo "usage incorrect"
     usage

@@ -111,7 +111,7 @@ echo "options ok"
 
 if [ "$template" == "" ]
 then
-    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm.nii.gz"
+    template="${HOME}/ANTS/ANTS_templates/MNI/MNI152_T1_2mm.nii.gz"
 fi
 
 if [ "$mask" == "" ]
