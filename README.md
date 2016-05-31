@@ -10,7 +10,12 @@ FMRI
 - warps EPI data to MNI space: antsRegister4D.sh
 
 Cortical thickness
-- with custom MNI space template & priors (including tumour masks): antsTumoursCT.sh
+- with custom MNI space template & priors (including tumour masks): antsTumourCT.sh
 
 Parcellation
 - in native space: antsParcellates.sh
+- 
+
+All-In-One
+
+runs all of above with default options (script): uberAnts.sh
