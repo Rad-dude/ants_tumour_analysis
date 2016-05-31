@@ -1,11 +1,12 @@
 #!/bin/sh
+set -e
 
 #Michael Hart, University of Cambridge, 13 April 2016 (c)
 
 #define directories
 
 codedir=${HOME}/bin
-basedir=$(pwd)
+basedir="$(pwd -P)"
 
 #make usage function
 
@@ -24,15 +25,17 @@ Warps a 4D epi to standard space
 
 Example:
 
-antsRegister4D.sh -f epi.nii.gz -w warp.nii.gz -r affine.mat -t MNI.nii.gz
+antsRegister4D.sh -f epi.nii.gz -w warp.nii.gz -r affine.mat
 
 Options:
 
-    -h  show this help
-    -f  functional (epi)
-    -w  warp (contactenated transform) from structural-to-standard
-    -r  rigid transform from epi-to-structural
-    -t  standard space template e.g. MNI
+-h  show this help
+-f  functional (epi)
+-w  warp (contactenated transform) from structural-to-standard
+-r  rigid transform from epi-to-structural
+-t  standard space template e.g. MNI
+-o  overwrite
+-v  verbose
 
 Version:    1.1
 
@@ -43,15 +46,21 @@ History:    no amendments
 EOF
 }
 
+
+###################
+# Standard checks #
+###################
+
+
+#initialise options
+
 functional=
 structural=
 warp=
 affine=
 template=
 
-#initialise options
-
-while getopts "hf:w:r:t:" OPTION
+while getopts "hf:w:r:tov" OPTION
 do
     case $OPTION in
     h)
@@ -81,6 +90,7 @@ done
 
 if [[ -z $functional ]] || [[ -z $warp ]] || [[ -z $affine ]] || [[ -z $template ]]
 then
+    echo "usage incorrect"
     usage
     exit 1
 fi
@@ -126,8 +136,10 @@ echo "files ok"
 if [ $(imtest $template) == 1 ];
 then
     echo "$template dataset ok"
+    template="${basedir}/${template}
 else
-    echo "Cannot locate file $template. Please ensure the $template dataset is in this directory"
+    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz"
+    echo "No template supplied - using MNI brain"
     exit 1
 fi
 
@@ -155,7 +167,7 @@ outdir=${basedir}/A4D
 
 tempdir="$(mktemp -t -d temp.XXXXXXXX)"
 
-cd $tempdir
+cd "${tempdir}"
 
 #start logfile
 
@@ -232,14 +244,15 @@ echo "now making some summary pictures"
 slices_summary epi2template.nii.gz 4 $template pictures.sum
 cd pictures.sum
 nImages=$(ls -l | wc -l)
+nImages=$((( nImages - 1 )))
 nPictures=$(for ((i=0; i<${nImages}; i++)); do printf "${i} "; done)
 cd ..
 slices_summary pictures.sum single_picture.png $nPictures
 
 #cleanup
-cd $outdir
-mv ${tempdir}/* .
-rm -R ${tempdir} MNI_replicated.nii.gz diff4DCollapsedWarp.nii.gz
+cp -fpR . "${outdir}"
+cd "${outdir}"
+rm -Rf "${tempdir}" MNI_replicated.nii.gz diff4DCollapsedWarp.nii.gz
 
 #close up
 echo "all done" >> ${log}

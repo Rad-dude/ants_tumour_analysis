@@ -2,6 +2,13 @@
 
 #Michael Hart, University of Cambridge, 19 April 2016 (c)
 
+#define directories
+
+codedir=${HOME}/bin
+basedir="$(pwd -P)"
+
+#make usage function
+
 usage()
 {
 cat<<EOF
@@ -19,16 +26,20 @@ Uses tumour mask and inverse transforms (from MNI to anatomical)
 
 Example:
 
-antsTumourReg.sh -a mprage_brain.nii.gz -t MNI152_T1_2mm_brain.nii.gz -m mask.nii.gz
+antsTumourReg.sh -s mprage_brain.nii.gz -m mask.nii.gz
 
 Options:
 
 -h  show this help
--a  skull stripped anatomical (fixed image)
--t  skull stripped template (moving image)
+-s  skull stripped anatomical (fixed image)
 -m  tumour mask (anatomical space - tumour is 1)
+-t  skull stripped template (moving image)
 -o  overwrite
 -v  verbose
+
+Version:    1.1
+
+History:    no amendments
 
 ============================================================================
 
@@ -43,21 +54,25 @@ EOF
 
 #initialise options
 
-while getopts "ha:t:m:ov" OPTION
+structural=
+tumour_mask=
+template=
+
+while getopts "hs:m:tov" OPTION
 do
     case $OPTION in
     h)
         usage
         exit 1
         ;;
-    a)
-        anat=$OPTARG
+    s)
+        structural=$OPTARG
+        ;;
+    m)
+        tumour_mask=$OPTARG
         ;;
     t)
         template=$OPTARG
-        ;;
-    m)
-        mask=$OPTARG
         ;;
     o)
         overwrite=1
@@ -81,7 +96,7 @@ fi
 
 #check usage
 
-if [[ -z $anat ]] || [[ -z $template ]] || [[ -z $mask ]]
+if [[ -z $structural ]] || [[ -z $tumour_mask ]]
 then
     echo "usage incorrect"
     usage
@@ -90,11 +105,43 @@ fi
 
 echo "options ok"
 
+# final check of files
 
-#define directories
-#need check if exists and if can overwrite
+echo "Checking structural data"
 
-basedir=`pwd`
+structural=${basedir}/${structural}
+
+if [ $(imtest $structural) == 1 ];
+then
+    echo "$structural dataset ok"
+else
+    echo "Cannot locate file $structural. Please ensure the $structural dataset is in this directory"
+    exit 1
+fi
+
+tumour_mask=${basedir}/${tumour_mask}
+
+if [ $(imtest) $tumour_mask == 1 ];
+then
+    echo "$tumour_mask ok"
+else
+    echo "Cannot locate file $tumour_mask. Please ensure the $tumour_mask dataset is in this directory"
+    exit 1
+fi
+
+if [ $(imtest $template) == 1 ];
+then
+    echo "$template dataset ok"
+    template="${basedir}/${template}
+else
+    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz"
+    echo "No template supplied - using MNI brain"
+    exit 1
+fi
+
+echo "files ok"
+
+#make output director
 
 if [ ! -d ${basedir}/ATR ];
 then
@@ -111,7 +158,14 @@ else
     fi
 fi
 
-outdir=${basedir}/ATR/
+outdir=${basedir}/ATR
+
+#make temporary directory
+
+tempdir="$(mktemp -t -d temp.XXXXXXXX)"
+
+cd "${tempdir}"
+mkdir ATR
 
 #start logfile
 
@@ -121,117 +175,96 @@ log=${outdir}antsTumourRegistration_logfile.txt
 echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
-# final check of files
-# do they exist, can they be read, by me, and are the correct format
-
-echo "Checking functional and template data"
-
-if [ -f $anat ];
-then
-    echo "$anat ok"
-else
-    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
-    exit 1
-fi
-
-if [ -f $template ];
-then
-    echo "$template ok"
-else
-    echo "Cannot locate file $template. Please ensure the $anat dataset is in   this directory"
-    exit 1
-fi
-
-if [ -f $mask ];
-then
-    echo "$mask ok"
-else
-    echo "Cannot locate file $mask. Please ensure the $anat dataset is in this directory"
-    exit 1
-fi
-
-echo "files ok"
-
 
 ##################
 # Main programme #
 ##################
 
 
-#1. Make mask negative first (exclusion mask)
-inv_mask=inv_mask.nii.gz
-fslmaths $mask -binv $inv_mask #tumour is 0 / rest is 1
+function antsTR() {
 
-#2. Create registration
-#note structural is fixed (with mask) and moving is MNI
 
-antsRegistrationSyN.sh \
--d 3 \
--f $anat \
--m $template \
--x $inv_mask \
--o $outdir
+    #1. Make mask negative first (exclusion mask)
+    inv_mask=inv_mask.nii.gz
+    fslmaths $tumour_mask -binv $inv_mask #tumour is 0 / rest is 1
 
-#3. Apply transforms to mprage (to put in MNI)
+    #2. Create registration
+    #note structural is fixed (with mask) and moving is MNI
 
-output=`echo $anat | sed s/.nii.gz/_/g`
+    antsRegistrationSyN.sh \
+    -d 3 \
+    -f $structural \
+    -m $template \
+    -x $inv_mask \
+    -o ATR/
 
-antsApplyTransforms \
--d 3 \
--i $anat \
--o ${outdir}${output}MNI.nii.gz \
--r $template \
--t ${outdir}[ATR_0GenericAffine.mat,1] \
--t ${outdir}ATR_1InverseWarp.nii.gz \
--n NearestNeighbor \
---float 1
+    #3. Apply transforms to mprage (to put in MNI)
 
-#4. Quality control registration output
-slices ${output}MNI.nii.gz ${template} -o ${outdir}ANTS_TumourReg_check.gif
+    output=`echo $anat | sed s/.nii.gz/_/g`
 
-#5. Apply transforms to lesion mask (to put in MNI)
+    antsApplyTransforms \
+    -d 3 \
+    -i $structural \
+    -o ATR/${output}MNI.nii.gz \
+    -r $template \
+    -t ATR/[ATR_0GenericAffine.mat,1] \
+    -t ATR/ATR_1InverseWarp.nii.gz \
+    -n NearestNeighbor \
+    --float 1
 
-output=`echo $mask | sed s/.nii.gz/_/g`
+    #4. Quality control registration output
+    slices ATR/${output}MNI.nii.gz ${template} -o ATR/ANTS_TumourReg_check.gif
 
-antsApplyTransforms \
--d 3 \
--i $mask \
--o ${outdir}${output}MNI.nii.gz \
--r $template \
--t ${outdir}[ATR_0GenericAffine.mat,1] \
--t ${outdir}ATR_1InverseWarp.nii.gz \
--n NearestNeighbor \
---float 1
+    #5. Apply transforms to lesion mask (to put in MNI)
 
-#6. Do some stuff to tumour mask 
-fslmaths ${outdir}${output}MNI.nii.gz -binv ${outdir}neg_mask_MNI
-fslmaths ${outdir}neg_mask_MNI -s 2 ${outdir}neg_mask_MNI_s2
-fslmaths $template -mul ${outdir}neg_mask_MNI_s2 ${outdir}template_lesioned
+    output=`echo $mask | sed s/.nii.gz/_/g`
 
-#7. Quality control lesion output
-slices template_lesioned -o ANTS_TumourReg_lesion_check.gif
+    antsApplyTransforms \
+    -d 3 \
+    -i $mask \
+    -o ATR/${output}MNI.nii.gz \
+    -r $template \
+    -t ATR/[ATR_0GenericAffine.mat,1] \
+    -t ATR/ATR_1InverseWarp.nii.gz \
+    -n NearestNeighbor \
+    --float 1
 
-#8. Concatenate transforms
+    #6. Do some stuff to tumour mask 
+    fslmaths ATR/${output}MNI.nii.gz -binv ATR/neg_mask_MNI
+    fslmaths ATR/neg_mask_MNI -s 2 ATR/neg_mask_MNI_s2
+    fslmaths $template -mul ATR/neg_mask_MNI_s2 ATR/template_lesioned
 
-antsApplyTransforms \
--d 3 \
--o ${outdir}[structural2standard.nii.gz,1] \
--t ${outdir}[ATR_0GenericAffine.mat, 1] \
--t ${outdir}ATR_1InverseWarp.nii.gz \
--r $template
+    #7. Quality control lesion output
+    slices ATR/template_lesioned -o ATR/ANTS_TumourReg_lesion_check.gif
 
-antsApplyTransforms \
--d 3 \
--o ${outdir}[standard2structural.nii.gz,1] \
--t ${outdir}ATR_1Warp.nii.gz \
--t ${outdir}ATR_0GenericAffine.mat \
--r $anat
+    #8. Concatenate transforms
 
-#perform cleanup
+    antsApplyTransforms \
+    -d 3 \
+    -o ATR/[structural2standard.nii.gz,1] \
+    -t ATR/[ATR_0GenericAffine.mat, 1] \
+    -t ATR/ATR_1InverseWarp.nii.gz \
+    -r $template
 
-rm ${outdir}neg_mask_MNI.nii.gz ${outdir}neg_mask_MNI_s2.nii.gz
+    antsApplyTransforms \
+    -d 3 \
+    -o ATR/[standard2structural.nii.gz,1] \
+    -t ATR/ATR_1Warp.nii.gz \
+    -t ATR/ATR_0GenericAffine.mat \
+    -r $structural
 
-#complete log
+}
+
+# call function
+
+antsTR
+
+# perform cleanup
+cp -fpR ./ATR/* "${outdir}"
+cd "${outdir}"
+rm -Rf "${tempdir}" neg_mask_MNI.nii.gz neg_mask_MNI_s2.nii.gz
+
+# complete log
 
 echo "all done with antsTumourReg.sh" >> ${log}
 echo $(date) >> ${log}
