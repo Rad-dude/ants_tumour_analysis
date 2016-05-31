@@ -153,8 +153,6 @@ echo "files ok"
 
 #make output directory
 
-basedir=`pwd`
-
 if [ ! -d ${basedir}/ABE ];
 then
     echo "making output director"
@@ -218,14 +216,15 @@ echo "now viewing results"
 
 slices $anat ABE/BrainExtractionBrain.nii.gz -o ABE_check.gif
 
-#perform cleanup
+#cleanup
 
 cd ABE/
 cp -fpR . "${outdir}"
 cd $outdir
 rm -Rf ${tempdir} BrainExtractionMask.nii.gz BrainExtractionPrior0GenericAffine.mat
 
-#complete log
+#close up
+
 cd ..
 echo "all done with antsBrains.sh" >> ${log}
 echo $(date) >> ${log}

@@ -2,6 +2,13 @@
 
 #Michael Hart, University of Cambridge, 19 April 2016 (c)
 
+#define directories
+
+codedir=${HOME}/bin
+basedir="$(pwd -P)"
+
+#make usage function
+
 usage()
 {
 cat<<EOF
@@ -25,46 +32,55 @@ NB: tumour mask must be standard space (e.g. MNI) - see antsTumourReg.sh
 
 Example:
 
-antsTumourCT.sh -a mprage.nii.gz -m tumour_mask_MNI.nii.gz -s ~/template
+antsTumourCT.sh -s mprage.nii.gz -m tumour_mask_MNI.nii.gz
 
 Options:
 
 -h  show this help
--a  anatomical image
+-s  anatomical image
 -m  standard space tumour mask (tumour is 1)
--s  path to standard space template
+-t  path to standard space template
 -o  overwrite output
 -v  verbose
 
 NB: standard space template requires images of full head, brain, brain mask, and priors
 (see github for MNI example)
 
+Version:    1.1
+
+History:    no amendments
+
 ============================================================================
 
 EOF
 }
+
 
 ###################
 # Standard checks #
 ###################
 
 
+structural=
+tumour_mask=
+template=
+
 #initialise options
 
-while getopts "ha:m:s:ov" OPTION
+while getopts "hs:m:tov" OPTION
 do
     case $OPTION in
     h)
         usage
         exit 1
         ;;
-    a)
-        anat=$OPTARG
+    s)
+        structural=$OPTARG
         ;;
     m)
-        mask=$OPTARG
+        tumour_mask=$OPTARG
         ;;
-    s)
+    t)
         template=$OPTARG
         ;;
     o)
@@ -89,18 +105,48 @@ fi
 
 #check usage
 
-if [[ -z $anat ]] || [[-z $mask ]] 
-    then
-        echo "usage incorrect"
-        usage
+if [[ -z "${structural}" ]] || [[-z "${tumour_mask}" ]]
+then
+    echo "usage incorrect"
+    usage
     exit 1
 fi
 
 echo "options ok"
 
-#define directories
+# final check of files
 
-basedir=`pwd`
+echo "Checking structural and tumour_mask data"
+
+if [ $(imtest "${structural") == 1 ];
+then
+    echo "Structural dataset ok"
+    structural=${basedir}/${structural}
+else
+    echo "Cannot locate file $structural. Please ensure the $structural dataset is in this directory"
+    exit 1
+fi
+
+if [ $(imtest "${tumour_mask}") == 1 ];
+then
+    echo "Tumour mask ok"
+    tumour_mask=${basedir}/${tumour_mask}
+else
+    echo "Cannot locate file "${tumour_mask}". Please ensure the "${tumour_mask}" dataset is in this directory"
+    exit 1
+fi
+
+if [ -d $template ];
+then
+    echo "$template dataset ok"
+    template="${basedir}/${template}
+else
+    template="${HOME}/ANTS/ANTS_templates/MNI"
+    echo "No template supplied - using MNI"
+    exit 1
+fi
+
+#make output directory
 
 if [ ! -d ${basedir}/ACT ];
 then
@@ -110,14 +156,23 @@ else
     echo "output directory already exists"
     if [ "$overwrite" == 1 ]
     then
-        mk -p ${basedir}/ACT
+        echo "overwriting output directory"
+        mkdir -p ${basedir}/ACT
     else
         echo "no overwrite permission to make new output directory"
         exit 1
     fi
 fi
 
-outdir=${basedir}/ACT/
+outdir=${basedir}/ACT
+
+#make temporary directory
+
+tempdir="$(mktemp -t -d temp.XXXXXXXX)"
+
+cd "${tempdir}"
+
+mkdir ACT #duplicate
 
 #start logfile
 
@@ -127,63 +182,55 @@ log=${outdir}/antsTumourCT_logfile.txt
 echo $(date) >> ${log}
 echo "${@}" >> ${log}
 
-# final check of files
-# do they exist, can they be read, by me, and are the correct format
-
-echo "Checking functional and template data"
-
-if [ -f $anat ];
-then
-    echo "Structural dataset ok"
-else
-    echo "Cannot locate file $anat. Please ensure the $anat dataset is in this directory"
-    exit 1
-fi
-
-if [ -f $mask ];
-then
-    echo "Tumour mask ok"
-else
-    echo "Cannot locate file $mask. Please ensure the $mask dataset is in this directory"
-    exit 1
-fi
-
 
 ##################
 # Main programme #
 ##################
 
 
-#subtract out priors
-fslmaths $mask -kernel sphere 2 -fmean $mask #smooth
+#define function
 
-cp -R ${template}/Priors .
+function antsTCT() {
 
-for i in {1..6}; do
-    fslmaths Priors/prior{i}.nii.gz -sub $mask Priors/prior{i}.nii.gz
-done
+    #subtract out priors
+    fslmaths "${tumour_mask}" -kernel sphere 2 -fmean "${tumour_mask}" #smooth
 
-#make new prior5 from tumour mask (in place of brainstem)
-cp $mask Priors/prior5.nii.gz
+    cp -R ${template}/Priors .
 
-#run antsCorticalThickness.sh
+    for i in {1..6};
+    do
+        fslmaths Priors/prior{i}.nii.gz -sub "${tumour_mask}" Priors/prior{i}.nii.gz
+    done
 
-echo "now running antsCorticalThickness.sh"
+    #make new prior5 from tumour mask (in place of brainstem)
+    cp "${tumour_mask}" Priors/prior5.nii.gz
 
-antsCorticalThickness.sh \
--d 3 \
--a $anat \
--e ${template}/MNI152_T1_2mm.nii.gz \
--m ${template}/MNI152_T1_2mm_brain_mask.nii.gz \
--p Priors/prior%d.nii.gz \
--t ${template}/MNI152_T1_2mm_brain.nii.gz \
--o $outdir
+    #run antsCorticalThickness.sh
 
-#perform cleanup
+    echo "now running antsCorticalThickness.sh"
 
-rm -r Priors/
+    antsCorticalThickness.sh \
+    -d 3 \
+    -a $structural \
+    -e ${template}/MNI152_T1_2mm.nii.gz \
+    -m ${template}/MNI152_T1_2mm_brain_mask.nii.gz \
+    -p Priors/prior%d.nii.gz \
+    -t ${template}/MNI152_T1_2mm_brain.nii.gz \
+    -o ACT/
 
-#complete log
+}
+
+#call function
+
+antsTCT
+
+#cleanup
+
+cp -fpR . "${outdir}"
+cd "${outdir}"
+rm -Rf "${outdir}" Priors/
+
+#close up
 
 echo "all done with antsTumourCT.sh" >> ${log}
 echo $(date) >> ${log}

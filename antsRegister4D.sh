@@ -86,6 +86,13 @@ do
     esac
 done
 
+#set verbose option
+
+if [ "$verbose" == 1 ]
+then
+    set -x verbose
+fi
+
 #check usage
 
 if [[ -z $functional ]] || [[ -z $warp ]] || [[ -z $affine ]] || [[ -z $template ]]
@@ -136,9 +143,9 @@ echo "files ok"
 if [ $(imtest $template) == 1 ];
 then
     echo "$template dataset ok"
-    template="${basedir}/${template}
+    template=${basedir}/${template}
 else
-    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz"
+    template=${HOME}/ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz
     echo "No template supplied - using MNI brain"
     exit 1
 fi
