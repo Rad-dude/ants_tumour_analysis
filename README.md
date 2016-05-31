@@ -14,7 +14,6 @@ Cortical thickness
 
 Parcellation
 - in native space: antsParcellates.sh
-- 
 
 All-In-One
 
