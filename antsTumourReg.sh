@@ -121,7 +121,7 @@ fi
 
 tumour_mask=${basedir}/${tumour_mask}
 
-if [ $(imtest) $tumour_mask == 1 ];
+if [ $(imtest $tumour_mask) == 1 ];
 then
     echo "$tumour_mask ok"
 else
@@ -132,11 +132,10 @@ fi
 if [ $(imtest $template) == 1 ];
 then
     echo "$template dataset ok"
-    template="${basedir}/${template}
+    template=${basedir}/${template}
 else
-    template="${HOME}ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz"
+    template="${HOME}/ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz"
     echo "No template supplied - using MNI brain"
-    exit 1
 fi
 
 echo "files ok"
@@ -158,19 +157,17 @@ else
     fi
 fi
 
-outdir=${basedir}/ATR
+outdir="${basedir}/ATR"
 
 #make temporary directory
 
 tempdir="$(mktemp -t -d temp.XXXXXXXX)"
-
 cd "${tempdir}"
-mkdir ATR
 
 #start logfile
 
-touch ${outdir}antsTumourRegistration_logfile.txt
-log=${outdir}antsTumourRegistration_logfile.txt
+touch antsTumourRegistration_logfile.txt
+log=antsTumourRegistration_logfile.txt
 
 echo $(date) >> ${log}
 echo "${@}" >> ${log}
@@ -196,24 +193,24 @@ function antsTR() {
     -f $structural \
     -m $template \
     -x $inv_mask \
-    -o ATR/
+    -o ATR
 
     #3. Apply transforms to mprage (to put in MNI)
 
-    output=`echo $anat | sed s/.nii.gz/_/g`
+    output=`echo $structural | sed s/.nii.gz/_/g`
 
     antsApplyTransforms \
     -d 3 \
     -i $structural \
-    -o ATR/${output}MNI.nii.gz \
+    -o ${output}MNI.nii.gz \
     -r $template \
-    -t ATR/[ATR_0GenericAffine.mat,1] \
-    -t ATR/ATR_1InverseWarp.nii.gz \
+    -t [ATR0GenericAffine.mat,1] \
+    -t ATR1InverseWarp.nii.gz \
     -n NearestNeighbor \
     --float 1
 
     #4. Quality control registration output
-    slices ATR/${output}MNI.nii.gz ${template} -o ATR/ANTS_TumourReg_check.gif
+    slices ${output}MNI.nii.gz ${template} -o ATR_structural_check.gif
 
     #5. Apply transforms to lesion mask (to put in MNI)
 
@@ -222,35 +219,35 @@ function antsTR() {
     antsApplyTransforms \
     -d 3 \
     -i $mask \
-    -o ATR/${output}MNI.nii.gz \
+    -o ${output}MNI.nii.gz \
     -r $template \
-    -t ATR/[ATR_0GenericAffine.mat,1] \
-    -t ATR/ATR_1InverseWarp.nii.gz \
+    -t [ATR0GenericAffine.mat,1] \
+    -t ATR1InverseWarp.nii.gz \
     -n NearestNeighbor \
     --float 1
 
     #6. Do some stuff to tumour mask 
-    fslmaths ATR/${output}MNI.nii.gz -binv ATR/neg_mask_MNI
-    fslmaths ATR/neg_mask_MNI -s 2 ATR/neg_mask_MNI_s2
-    fslmaths $template -mul ATR/neg_mask_MNI_s2 ATR/template_lesioned
+    fslmaths ${output}MNI.nii.gz -binv neg_mask_MNI
+    fslmaths neg_mask_MNI -s 2 neg_mask_MNI_s2
+    fslmaths $template -mul neg_mask_MNI_s2 template_lesioned
 
     #7. Quality control lesion output
-    slices ATR/template_lesioned -o ATR/ANTS_TumourReg_lesion_check.gif
+    slices template_lesioned -o ATR_lesion_check.gif
 
     #8. Concatenate transforms
 
     antsApplyTransforms \
     -d 3 \
-    -o ATR/[structural2standard.nii.gz,1] \
-    -t ATR/[ATR_0GenericAffine.mat, 1] \
-    -t ATR/ATR_1InverseWarp.nii.gz \
+    -o [structural2standard.nii.gz,1] \
+    -t [ATR0GenericAffine.mat, 1] \
+    -t ATR1InverseWarp.nii.gz \
     -r $template
 
     antsApplyTransforms \
     -d 3 \
-    -o ATR/[standard2structural.nii.gz,1] \
-    -t ATR/ATR_1Warp.nii.gz \
-    -t ATR/ATR_0GenericAffine.mat \
+    -o [standard2structural.nii.gz,1] \
+    -t ATR1Warp.nii.gz \
+    -t ATR0GenericAffine.mat \
     -r $structural
 
 }
@@ -260,7 +257,7 @@ function antsTR() {
 antsTR
 
 # perform cleanup
-cp -fpR ./ATR/* "${outdir}"
+cp -fpR . "${outdir}"
 cd "${outdir}"
 rm -Rf "${tempdir}" neg_mask_MNI.nii.gz neg_mask_MNI_s2.nii.gz
 
