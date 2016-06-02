@@ -132,14 +132,14 @@ then
     echo "Tumour mask ok"
     tumour_mask=${basedir}/${tumour_mask}
 else
-    echo "Cannot locate file "${tumour_mask}". Please ensure the "${tumour_mask}" dataset is in this directory"
+    echo "Cannot locate file ${tumour_mask}. Please ensure the "${tumour_mask}" dataset is in this directory"
     exit 1
 fi
 
 if [ -d $template ];
 then
     echo "$template dataset ok"
-    template="${basedir}/${template}
+    template=${basedir}/${template}
 else
     template="${HOME}/ANTS/ANTS_templates/MNI"
     echo "No template supplied - using MNI"
@@ -150,7 +150,7 @@ fi
 
 if [ ! -d ${basedir}/ACT ];
 then
-    echo "making output director"
+    echo "making output directory"
     mkdir ${basedir}/ACT
 else
     echo "output directory already exists"

@@ -95,7 +95,7 @@ fi
 
 #check usage
 
-if [[ -z $functional ]] || [[ -z $warp ]] || [[ -z $affine ]] || [[ -z $template ]]
+if [[ -z $functional ]] || [[ -z $warp ]] || [[ -z $affine ]] 
 then
     echo "usage incorrect"
     usage

@@ -34,7 +34,7 @@ echo "" >> $log
 echo $(date) >> $log
 echo "doing antsTumourReg" >> $log
 
-antsTumourReg.sh -s mprage_brain.nii.gz -m tumour_mask.nii.gz
+antsTumourReg.sh -s ABE/BrainExtractionBrain.nii.gz -m tumour_mask.nii.gz
 #brain from antsBrains.sh
 
 echo $(date) >> $log
