@@ -225,9 +225,10 @@ antsTCT
 
 #cleanup
 
+cd ACT
 cp -fpR . "${outdir}"
 cd "${outdir}"
-rm -Rf "${outdir}" Priors/
+rm -Rf "${tempdir}" Priors/
 
 #close up
 
