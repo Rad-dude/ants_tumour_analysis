@@ -147,7 +147,6 @@ then
 else
     template=${HOME}/ANTS/ANTS_templates/MNI/MNI152_T1_2mm_brain.nii.gz
     echo "No template supplied - using MNI brain"
-    exit 1
 fi
 
 #make output directory

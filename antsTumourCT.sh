@@ -118,7 +118,7 @@ echo "options ok"
 
 echo "Checking structural and tumour_mask data"
 
-if [ $(imtest "${structural") == 1 ];
+if [ $(imtest "${structural}") == 1 ];
 then
     echo "Structural dataset ok"
     structural=${basedir}/${structural}
@@ -136,14 +136,13 @@ else
     exit 1
 fi
 
-if [ -d $template ];
+if [ "${template}" = "" ];
 then
-    echo "$template dataset ok"
-    template=${basedir}/${template}
-else
-    template="${HOME}/ANTS/ANTS_templates/MNI"
     echo "No template supplied - using MNI"
-    exit 1
+    template="${HOME}/ANTS/ANTS_templates/MNI"
+else
+    echo "${template} dataset ok"
+    template=${basedir}/${template}
 fi
 
 #make output directory

@@ -18,6 +18,7 @@ echo "time to start uberAnts" >> $log
 
 #1. Brain extraction of structural
 
+echo "" >> $log
 echo $(date) >> $log
 echo "doing antsBrains" >> $log
 
