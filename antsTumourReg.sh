@@ -214,7 +214,7 @@ function antsTR() {
 
     #5. Apply transforms to lesion mask (to put in MNI)
 
-    output=`echo $mask | sed s/.nii.gz/_/g`
+    output=`echo $tumour_mask | sed s/.nii.gz/_/g`
 
     antsApplyTransforms \
     -d 3 \
