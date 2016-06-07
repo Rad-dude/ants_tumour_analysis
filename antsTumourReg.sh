@@ -218,7 +218,7 @@ function antsTR() {
 
     antsApplyTransforms \
     -d 3 \
-    -i $mask \
+    -i $tumour_mask \
     -o ${output}MNI.nii.gz \
     -r $template \
     -t [ATR0GenericAffine.mat,1] \
