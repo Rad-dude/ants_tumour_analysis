@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 #Michael Hart, University of Cambridge, 19 April 2016 (c)
 
