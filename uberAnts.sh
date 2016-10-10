@@ -4,7 +4,7 @@
 #
 # reguires following files in directory:
 #
-# mprage.nii.gz, tumour_mask.nii.gz, ffd_clean.nii.gz, melodic_IC.nii.gz
+# mprage.nii.gz, tumour_mask.nii.gz, epi123_medn.nii.gz, melodic_IC.nii.gz
 #
 # Created by Michael Hart on 27/05/2016.
 
@@ -49,7 +49,7 @@ echo "" >> $log
 echo $(date) >> $log
 echo "doing antsEpiReg" >> $log
 
-antsEpiReg.sh -f ffd_clean.nii.gz -s ABE/BrainExtractionBrain.nii.gz
+antsEpiReg.sh -f epi123_medn.nii.gz -s ABE/BrainExtractionBrain.nii.gz
 #brain from antsBrains.sh
 
 echo $(date) >> $log
@@ -87,15 +87,19 @@ echo "" >> $log
 ######################################################################
 
 #6. Parcellation
-#echo $(date) >> $log
-#echo "doing antsParcellates"
+echo $(date) >> $log
+echo "doing antsParcellates"
 
-#antsParcellates.sh -f ffd_clean.nii.gz -w ATR/standard2structural.nii.gz -r AER/affine0GenericAffine.mat
+antsParcellates.sh -f ffd_clean.nii.gz -w ATR/standard2structural.nii.gz -r AER/affine0GenericAffine.mat
 #uses default parcellation
 
-#echo $(date) >> $log
-#echo "all done with antsParcellates" >> $log
-#echo "" >> $log
+antsParcellates.sh -f epi123_medn.nii.gz -w ATR/standard2structural.nii.gz -r AER/affine0GenericAffine.mat -p  ~/templates/rafa/rafa251.nii.gz
+
+antsParcellates.sh -f epi123_medn.nii.gz -w ATR/standard2structural.nii.gz -r AER/affine0GenericAffine.mat -p ~/templates/cluster/cluster250.nii.gz
+
+echo $(date) >> $log
+echo "all done with antsParcellates" >> $log
+echo "" >> $log
 
 ######################################################################
 

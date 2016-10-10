@@ -60,7 +60,7 @@ warp=
 affine=
 template=
 
-while getopts "hf:w:r:tov" OPTION
+while getopts "hf:w:r:t:ov" OPTION
 do
     case $OPTION in
     h)
@@ -79,6 +79,12 @@ do
     t)
         template=$OPTARG
         ;;
+    o)
+	overwrite=1
+	;;
+    v)
+	verbose=1
+	;;	
     ?)
         usage
         exit

@@ -183,14 +183,15 @@ function antsER() {
     -o affine \
     -f $structural \
     -m $ref \
-    -t a
-
+    -t r
+	
     #3. warp the single epi image
 
     antsApplyTransforms \
     -d 3 \
     -o epi2struct.nii.gz \
     -i $ref \
+    -t affine1Warp.nii.gz
     -t affine0GenericAffine.mat \
     -r $structural
 
@@ -206,7 +207,7 @@ echo "antsEpiReg done: functional registered to structural"
 
 echo "now viewing results"
 
-slices epi2struct.nii.gz $structural -o antsEpiCheck.gif
+slices $structural epi2struct.nii.gz -o antsEpiCheck.gif
 
 #perform cleanup
 

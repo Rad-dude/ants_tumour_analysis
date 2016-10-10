@@ -31,7 +31,7 @@ Options:
 
 -f  functional (epi)
 -w  warp (concatenated transform) from standard-to-structural e.g. antsTumourReg.sh output
--r  rigid transform (affine) from epi-to-structural e.g. antsEpiReg.sh output
+-r  rigid transform (6 DOF) from epi-to-structural e.g. antsEpiReg.sh output
 -p  parcellation template (optional: default=AAL_random256)
 -o  overwrite
 -v  verbose
@@ -42,9 +42,9 @@ ants_ts.txt:    time series per parcel
 ants_n.txt:     number of voxcels per parcel
 ants_xyz.txt:   epi co-ordinates of parcel centre of gravity (mm)
 
-Version:    1.0
+Version:    1.1
 
-History:    no amendments
+History:    added output directory naming	10 October 2016
 
 ============================================================================
 
@@ -59,11 +59,11 @@ EOF
 functional=
 warp=
 rigid=
-parcellation=
+
 
 #initialise options
 
-while getopts "hf:w:r:pov" OPTION
+while getopts "hf:w:r:p:ov" OPTION
 do
     case $OPTION in
     h)
@@ -94,6 +94,8 @@ do
         ;;
     esac
 done
+
+echo "${parcellation}"
 
 #set verbose option
 
@@ -137,7 +139,7 @@ fi
 
 affine=${basedir}/${affine}
 
-if [ $(imtest "${affine}") == 1 ];
+if [ -f "${affine}" ];
 then
     echo "$affine is ok"
 else
@@ -145,35 +147,38 @@ else
     exit 1
 fi
 
-if [ $(imtest {${template}") == 1 ];
+if [ -f "${parcellation}" ];
 then
-    echo "$template dataset ok"
-    template=${basedir}/${template}
+    echo "$parcellation dataset ok"
+    template=${parcellation}
 else
-    template="${HOME}/templates/AAL256.nii.gz"
+    echo "$parcellation is ok"
+    template="${HOME}/templates/AAL/AAL256.nii.gz"
     echo "No template supplied - using AAL_random256"
 fi
 
 echo "files ok"
 
-#make output director
+#make output directory
 
-if [ ! -d "${basedir}"/AP ];
+outname=`basename ${template} .nii.gz`
+
+if [ ! -d ${basedir}/${outname} ];
 then
     echo "making output directory"
-    mkdir "${basedir}"/AP
+    mkdir ${basedir}/${outname}
 else
     echo "output directory already exists"
     if [ "$overwrite" == 1 ]
     then
-        mkdir -p "${basedir}"/AP
+        mkdir -p ${basedir}/${outname}
     else
         echo "no overwrite permission to make new output directory"
         exit 1
     fi
 fi
 
-outdir="${basedir}"/AP
+outdir=${basedir}/${outname}
 
 #make temporary directory
 
@@ -198,7 +203,7 @@ function antsParcels() {
 
     #1. create a single EPI 3D volume for registration of template to functional space
     ref=epi_avg.nii.gz
-    antsMotionCorr -d 3 -a "${functional}" -o "${ref}" #
+    antsMotionCorr -d 3 -a "${functional}" -o "${ref}" 
 
     #2. move parcellation template to functional space
 
@@ -210,7 +215,7 @@ function antsParcels() {
     -t "${warp}" \
     -t ["${affine}", 1] \
     -r "${ref}" \
-    -i "${parcellation}" \
+    -i "${template}" \
     -n NearestNeighbor \
     --float
 
@@ -218,7 +223,7 @@ function antsParcels() {
 
     echo "now extracting timeseries for each parcels"
 
-    fslmeants -i "${functional}" --label=native_template.nii.gz --transpose -o ants_ts.txt
+    fslmeants -i "${functional}" --label=native_template.nii.gz -o ants_ts.txt
 
     #4. calculate co-ordinates and numbers of voxels
 
