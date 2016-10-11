@@ -25,13 +25,14 @@ Registers a parcellation template to functional space & extracts data for connec
 
 Example:
 
-antsParcellates.sh -f epi.nii.gz -w warp.nii.gz -r affine.mat
+antsParcellates.sh -f epi.nii.gz -w warp.nii.gz -r rigid.mat -c corticalThickness.nii.gz
 
 Options:
 
 -f  functional (epi)
 -w  warp (concatenated transform) from standard-to-structural e.g. antsTumourReg.sh output
 -r  rigid transform (6 DOF) from epi-to-structural e.g. antsEpiReg.sh output
+-c  cortical thickness map (optional: standard space e.g. antsCorticalThickness.sh output)
 -p  parcellation template (optional: default=AAL_random256)
 -o  overwrite
 -v  verbose
@@ -45,6 +46,7 @@ ants_xyz.txt:   epi co-ordinates of parcel centre of gravity (mm)
 Version:    1.1
 
 History:    added output directory naming	10 October 2016
+	    added grey matter mask 		11 October 2016	
 
 ============================================================================
 
@@ -59,11 +61,11 @@ EOF
 functional=
 warp=
 rigid=
-
+cortex=
 
 #initialise options
 
-while getopts "hf:w:r:p:ov" OPTION
+while getopts "hf:w:r:c:p:ov" OPTION
 do
     case $OPTION in
     h)
@@ -77,8 +79,11 @@ do
         warp=$OPTARG
         ;;
     r)
-        affine=$OPTARG
+        rigid=$OPTARG
         ;;
+    c)
+    	cortex=$OPTARG
+    	;;	    
     p)
         parcellation=$OPTARG
         ;;
@@ -106,7 +111,7 @@ fi
 
 #check usage
 
-if [[ -z "${functional}" ]] || [[ -z "${warp}" ]] || [[ -z "${affine}" ]]; then
+if [[ -z "${functional}" ]] || [[ -z "${warp}" ]] || [[ -z "${rigid}" ]]; then
     usage
     exit 1
 fi
@@ -137,13 +142,23 @@ else
     exit 1
 fi
 
-affine=${basedir}/${affine}
+rigid=${basedir}/${rigid}
 
-if [ -f "${affine}" ];
+if [ -f "${rigid}" ];
 then
-    echo "$affine is ok"
+    echo "$rigid is ok"
 else
-    echo "Cannot locate file $affine. Please ensure the $affine dataset is in this directory"
+    echo "Cannot locate file $rigid. Please ensure the $rigid dataset is in this directory"
+    exit 1
+fi
+
+cortex=${basedir}/${cortex}
+
+if [ $(imtest "${cortex}") == 1 ];
+then
+    echo "$cortex is ok"
+else
+    echo "Cannot locate file $cortex. Please ensure the $cortex dataset is in this directory"
     exit 1
 fi
 
@@ -201,11 +216,19 @@ echo "${@}" >> "${log}"
 
 function antsParcels() {
 
-    #1. create a single EPI 3D volume for registration of template to functional space
+    #1. mask template with grey matter mask (optional)
+    if [ $(imtest "${cortex}") == 1 ];
+    then
+    	echo "masking template with grey matter mask"
+    	fslmaths ${cortex} -bin ${cortex}
+    	fslmaths ${template} -mul ${cortex} ${template}
+    fi
+    
+    #2. create a single EPI 3D volume for registration of template to functional space
     ref=epi_avg.nii.gz
     antsMotionCorr -d 3 -a "${functional}" -o "${ref}" 
 
-    #2. move parcellation template to functional space
+    #3. move parcellation template to functional space
 
     echo "moving template from MNI to functional space"
 
@@ -213,19 +236,19 @@ function antsParcels() {
     -d 3 \
     -o native_template.nii.gz \
     -t "${warp}" \
-    -t ["${affine}", 1] \
+    -t ["${rigid}", 1] \
     -r "${ref}" \
     -i "${template}" \
     -n NearestNeighbor \
     --float
 
-    #3. extract time series
+    #4. extract time series
 
     echo "now extracting timeseries for each parcels"
 
     fslmeants -i "${functional}" --label=native_template.nii.gz -o ants_ts.txt
 
-    #4. calculate co-ordinates and numbers of voxels
+    #5. calculate co-ordinates and numbers of voxels
 
     echo "finally checking numbers of voxels and co-ordinates of each parcel"
 
